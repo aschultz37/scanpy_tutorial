@@ -67,5 +67,3 @@ print(layer_df)
 
 #Writing results to disk
 adata.write("tutorial_results.h5ad", compression="gzip")
-
-#
