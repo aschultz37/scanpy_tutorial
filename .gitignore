@@ -1,6 +1,3 @@
-fastq/*
-fastq
-cellranger/*
-cellranger
+raw/
 
 *.h5ad
