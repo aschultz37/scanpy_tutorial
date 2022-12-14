@@ -1,0 +1,5 @@
+fastq/*
+fastq
+cellranger/*
+cellranger
+sascrip.log
