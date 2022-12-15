@@ -2,11 +2,6 @@ import numpy as np
 import pandas as pd
 import scanpy as sc
 
-#import matplotlib
-#from importlib import reload
-#matplotlib.use('Qt5Agg', force=True)
-#matplotlib = reload(matplotlib)
-
 # Set up general settings
 sc.settings.verbosity = 3
 sc.logging.print_header()
@@ -90,11 +85,11 @@ sc.pp.neighbors(adata, n_neighbors=10, n_pcs=20)
 
 # EMBEDDING THE NEIGHBORHOOD GRAPH
 # embed the graph in two dimensions using UMAP
+sc.tl.umap(adata)
+sc.pl.umap(adata, color=['Cxcr6', 'Cxcr4', 'Ccr7'])
 #sc.tl.paga(adata)
 #sc.pl.paga(adata, plot=False)
 #sc.tl.umap(adata, init_pos='paga')
-sc.tl.umap(adata)
-sc.pl.umap(adata, color=['Cxcr6', 'Cxcr4', 'Ccr7'])
 
 # CLUSTERING THE NEIGHBORHOOD GRAPH
 # directly clusters neighborhood graph of cells from prev. section
