@@ -66,4 +66,4 @@ layer_df = adata.to_df(layer="log_transformed")
 print(layer_df)
 
 # Writing results to disk
-adata.write("tutorial_results.h5ad", compression="gzip")
+adata.write("adata_tutorial_results.h5ad", compression="gzip")

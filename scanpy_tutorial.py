@@ -2,6 +2,11 @@ import numpy as np
 import pandas as pd
 import scanpy as sc
 
+#import matplotlib
+#from importlib import reload
+#matplotlib.use('Qt5Agg', force=True)
+#matplotlib = reload(matplotlib)
+
 # Set up general settings
 sc.settings.verbosity = 3
 sc.logging.print_header()
@@ -10,7 +15,7 @@ sc.settings.set_figure_params(dpi=80, facecolor='white')
 results_file = 'output/tutorial_WT.h5ad'  # output of preprocessing/clustering
 
 # Read count matrix into AnnData object
-adata = sc.read_10_mtx(
+adata = sc.read_10x_mtx(
     'raw/',                    # directory with the .mtx file
     var_names='gene_symbols',  # use gene symbols for var names
     cache=True)                # cache file for faster reading
@@ -28,7 +33,7 @@ sc.pp.filter_cells(adata, min_genes=200) # filter cells w < 200 genes
 sc.pp.filter_genes(adata, min_cells=3)   # filter genes found in < 3 cells
 
 # compute mitochondrial gene metrics
-adata.var['mt'] = adata.var_names.str.startswith('MT-')
+adata.var['mt'] = adata.var_names.str.startswith('Mt-')
 sc.pp.calculate_qc_metrics(adata, qc_vars=['mt'], percent_top=None,
                            log1p=False, inplace=True)
 
@@ -68,3 +73,32 @@ sc.pp.regress_out(adata, ['total_counts', 'pct_counts_mt'])
 sc.pp.scale(adata, max_value=10)
 
 # PRINCIPAL COMPONENT ANALYSIS (PCA)
+# reduces dimensionality of the data; reveals main axes of variation & denoises
+sc.tl.pca(adata, svd_solver='arpack')
+sc.pl.pca(adata, color='Cxcr6')
+
+# inspect contribution of PCs to total variance in data
+sc.pl.pca_variance_ratio(adata, log=True)
+
+#save result
+adata.write(results_file)
+print(adata)
+
+# COMPUTING THE NEIGHBORHOOD GRAPH
+# these values based on Seurat tutorial
+sc.pp.neighbors(adata, n_neighbors=10, n_pcs=20)
+
+# EMBEDDING THE NEIGHBORHOOD GRAPH
+# embed the graph in two dimensions using UMAP
+#sc.tl.paga(adata)
+#sc.pl.paga(adata, plot=False)
+#sc.tl.umap(adata, init_pos='paga')
+sc.tl.umap(adata)
+sc.pl.umap(adata, color=['Cxcr6', 'Cxcr4', 'Ccr7'])
+
+# CLUSTERING THE NEIGHBORHOOD GRAPH
+# directly clusters neighborhood graph of cells from prev. section
+sc.tl.leiden(adata)
+sc.pl.umap(adata, color=['leiden', 'Cxcr6', 'Cxcr4'])
+
+adata.write(results_file)

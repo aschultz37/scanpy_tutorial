@@ -1,3 +1,5 @@
 raw/
+cache/
+output/
 
 *.h5ad
