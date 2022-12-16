@@ -2,12 +2,32 @@ import numpy as np
 import pandas as pd
 import scanpy as sc
 
+def unique_clusters(zdata):
+    '''Find all unique clusters from AnnData object
+        and return a list.'''
+    clust_list = []
+    for cat in zdata.obs['leiden']:
+        if cat not in clust_list:
+            clust_list.append(cat)
+    return clust_list
+
+def parse_clusters(zdata, cluster_list):
+    '''Based on a list of all clusters in the AnnData object,
+        make new objects which are the subset of cells corresponding
+        to each cluster. Returns a dictionary of objs keyed by cluster ID.'''
+    clust_dict = {}
+    for cluster in cluster_list:
+        tmpdata = zdata[zdata.obs.leiden == cluster]
+        clust_dict[cluster] = tmpdata
+    return clust_dict
+
 # Set up general settings
 sc.settings.verbosity = 3
 sc.logging.print_header()
 sc.settings.set_figure_params(dpi=80, facecolor='white')
 
-results_file = 'output/tutorial_WT.h5ad'  # output of preprocessing/clustering
+results_file = 'output/tutorial_WT-0-7.h5ad'  # output of preprocessing
+                                              # clustering
 
 # Read count matrix into AnnData object
 adata = sc.read_10x_mtx(
@@ -28,7 +48,7 @@ sc.pp.filter_cells(adata, min_genes=200) # filter cells w < 200 genes
 sc.pp.filter_genes(adata, min_cells=3)   # filter genes found in < 3 cells
 
 # compute mitochondrial gene metrics
-adata.var['mt'] = adata.var_names.str.startswith('Mt-')
+adata.var['mt'] = adata.var_names.str.startswith('mt-')
 sc.pp.calculate_qc_metrics(adata, qc_vars=['mt'], percent_top=None,
                            log1p=False, inplace=True)
 
@@ -50,7 +70,8 @@ sc.pp.normalize_total(adata, target_sum=1e4) # make counts comparable b/w cells
 sc.pp.log1p(adata)
 
 # identify highly-variable genes
-sc.pp.highly_variable_genes(adata, min_mean=0.0125, max_mean=3, min_disp=0.5)
+sc.pp.highly_variable_genes(adata, min_mean=0.0125,
+                            max_mean=3, min_disp=0.5)
 sc.pl.highly_variable_genes(adata)
 
 # set .raw attribute of AnnData obj to the normalized & logarithmized data
@@ -93,7 +114,18 @@ sc.pl.umap(adata, color=['Cxcr6', 'Cxcr4', 'Ccr7'])
 
 # CLUSTERING THE NEIGHBORHOOD GRAPH
 # directly clusters neighborhood graph of cells from prev. section
-sc.tl.leiden(adata)
+sc.tl.leiden(adata, resolution=0.7)
 sc.pl.umap(adata, color=['leiden', 'Cxcr6', 'Cxcr4'])
+
+# HEATMAP OF MARKER GENES
+# 10 most variable genes per cluster
+# find all clusters
+clusters = unique_clusters(adata)
+
+# create AnnData obj of each cluster & store as dict keyed by cluster
+data_clusters = parse_clusters(adata, clusters)
+
+# for each cluster, find 10 highest-variance genes
+
 
 adata.write(results_file)
