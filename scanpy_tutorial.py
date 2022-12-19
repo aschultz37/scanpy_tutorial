@@ -21,18 +21,12 @@ def parse_clusters(zdata, cluster_list):
         clust_dict[cluster] = tmpdata
     return clust_dict
 
-def top_10_cluster(zdata, cluster_dict):
-    '''Based on dict of clusters, find the top 10 most variable genes
-        in each cluster. Returns the list of top 10 for each cluster as
-        a dict keyed by cluster ID.'''
-    pass
-
 # Set up general settings
 sc.settings.verbosity = 3
 sc.logging.print_header()
 sc.settings.set_figure_params(dpi=80, facecolor='white')
 
-results_file = 'output/tutorial_WT-0-7.h5ad'  # output of preprocessing
+results_file = 'output/seuratv3-0-6.h5ad'  # output of preprocessing
                                               # clustering
 
 # Read count matrix into AnnData object
@@ -122,20 +116,27 @@ sc.pl.umap(adata, color=['Cxcr6', 'Cxcr4', 'Ccr7'])
 
 # CLUSTERING THE NEIGHBORHOOD GRAPH
 # directly clusters neighborhood graph of cells from prev. section
-sc.tl.leiden(adata, resolution=0.7)
+sc.tl.leiden(adata, resolution=0.6)
 sc.pl.umap(adata, color=['leiden', 'Cxcr6', 'Cxcr4'])
 
 # HEATMAP OF MARKER GENES
 # 10 most variable genes per cluster
-# find all clusters
-clusters = unique_clusters(adata)
-#print(clusters) #DEBUG
+sc.tl.rank_genes_groups(adata, 'leiden', method='t-test')
+sc.pl.rank_genes_groups(adata, n_genes=10)
+sc.pl.rank_genes_groups_heatmap(adata, n_genes=10, show_gene_labels=True)
 
-# create AnnData obj of each cluster & store as dict keyed by cluster
-data_clusters = parse_clusters(adata, clusters)
-#print(data_clusters) #DEBUG
+# MERGE CLUSTERS
+# rename clusters to merge them
+adata.obs['leiden'] = (
+    adata.obs['leiden']
+    .map(lambda x: {'4': '2'}.get(x, x))
+    .astype('category')
+)
 
-# for each cluster, find 10 highest-variance genes
-
+# HEATMAP AFTER MERGING CLUSTERS
+sc.tl.rank_genes_groups(adata, 'leiden', method='t-test')
+sc.tl.dendrogram(adata, 'leiden') # have to include for re-run
+sc.pl.rank_genes_groups(adata, n_genes=10)
+sc.pl.rank_genes_groups_heatmap(adata, n_genes=10, show_gene_labels=True)
 
 adata.write(results_file)
