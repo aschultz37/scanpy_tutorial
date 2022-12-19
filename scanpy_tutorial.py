@@ -21,6 +21,12 @@ def parse_clusters(zdata, cluster_list):
         clust_dict[cluster] = tmpdata
     return clust_dict
 
+def top_10_cluster(zdata, cluster_dict):
+    '''Based on dict of clusters, find the top 10 most variable genes
+        in each cluster. Returns the list of top 10 for each cluster as
+        a dict keyed by cluster ID.'''
+    pass
+
 # Set up general settings
 sc.settings.verbosity = 3
 sc.logging.print_header()
@@ -70,8 +76,10 @@ sc.pp.normalize_total(adata, target_sum=1e4) # make counts comparable b/w cells
 sc.pp.log1p(adata)
 
 # identify highly-variable genes
-sc.pp.highly_variable_genes(adata, min_mean=0.0125,
-                            max_mean=3, min_disp=0.5)
+#sc.pp.highly_variable_genes(adata, min_mean=0.0125,
+#                            max_mean=3, min_disp=0.5)
+sc.pp.highly_variable_genes(adata, flavor='seurat_v3', n_top_genes=2000,
+                            span=0.3, check_values=True)
 sc.pl.highly_variable_genes(adata)
 
 # set .raw attribute of AnnData obj to the normalized & logarithmized data
@@ -121,9 +129,11 @@ sc.pl.umap(adata, color=['leiden', 'Cxcr6', 'Cxcr4'])
 # 10 most variable genes per cluster
 # find all clusters
 clusters = unique_clusters(adata)
+#print(clusters) #DEBUG
 
 # create AnnData obj of each cluster & store as dict keyed by cluster
 data_clusters = parse_clusters(adata, clusters)
+#print(data_clusters) #DEBUG
 
 # for each cluster, find 10 highest-variance genes
 
