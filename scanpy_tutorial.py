@@ -133,6 +133,9 @@ adata.obs['leiden'] = (
     .astype('category')
 )
 
+# UMAP AFTER MERGING CLUSTERS
+sc.pl.umap(adata, color=['leiden', 'Cxcr6', 'Cxcr4'])
+
 # HEATMAP AFTER MERGING CLUSTERS
 sc.tl.rank_genes_groups(adata, 'leiden', method='t-test')
 sc.tl.dendrogram(adata, 'leiden') # have to include for re-run
